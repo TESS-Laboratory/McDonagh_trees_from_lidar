@@ -7,3 +7,13 @@ Data Source: This study uses a combination of data:
 
 Scripts
 This repository contains the following scripts within the "Script" folder:
+
+OxburghProject_EA2018_LIDAR.R ~  This script contains the importing and analysis of EA 2018 point cloud data. In particular, normalisation, filtering, clipping of point cloud .Extracting tree metrics, applying allometric equations for abovergroound biomass and plotting the results.
+
+OxburghProjectDrone_LIDAR.R ~ This script contains the importing and analysis of National Trust 2023 drone point cloud. In particular, normalisation, filtering, clipping of point cloud. Extracting tree metrics, applying allometric equations for abovergroound biomass and plotting the results. Includes density reduction methods as drone data is very lage file.
+
+Outputs
+This repository contains output files that were created using the scripts. In formats of CSV, shapefiles and LAS.
+
+Plots
+This repository contains plots and outputs used to visualise the data. In PNG format.
