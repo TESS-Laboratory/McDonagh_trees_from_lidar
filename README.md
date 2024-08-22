@@ -5,6 +5,8 @@ Data Source: This study uses a combination of data:
 2. Airbone drone LiDAR data in point cloud LAS format (2023), supplied by Keith Challis.
 3. National Trust Toographic data supplied from Emapsite.
 
+Contact: am1287@exeter.ac.uk {email}
+
 Scripts
 This repository contains the following scripts within the "Script" folder:
 
