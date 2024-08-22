@@ -104,6 +104,23 @@ plot_dtm3d(dtm_kriging, bg = "white")
 normclipped_las_EA_2018_2 <- normalize_height(clipped_las_EA_2018, tin(), dtm = dtm)
 hist(filter_ground(normclipped_las_EA_2018_2)$Z, breaks = seq(-0.6, 0.6, 0.01), main = "", xlab = "Elevation")
 
+##### Doing ITS using canopy height model (rasterising) ####
+# Plot the segmented trees
+#png(filename = "C:/workspace/McDonagh_trees_from_lidar/plots/chm_2018.png", width = 800, height = 600)
+#plot(chm_2018, main = "Canopy Height Model (CHM) EA 2018")
+#dev.off()
+### Individual tree segmentation (ITS) ###
+# Set the segmentation algorithm (dalponte2016 in this case)
+#ttops <- locate_trees(cleaned_las_2018, lmf(5, 2)) # Detect treetops
+#algo2 <- dalponte2016(chm = chm_2018, treetops = ttops)
+# Segment trees
+#trees_2018_2 <- segment_trees(cleaned_las_2018, algo2)
+# Plot the segmented trees
+#plot(trees_2018_2, color = "treeID", bg = "white", axis = TRUE, legend = FALSE)
+# Compute the maximum height for each tree
+#tree_heights_2 <- tree_metrics(trees_2018_2, ~max(Z))
+# Print tree heights
+#print(tree_heights_2)
 
 ### CODE I NEED TO MAKE
 
