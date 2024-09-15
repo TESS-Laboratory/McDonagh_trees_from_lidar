@@ -121,6 +121,7 @@ summary(cleaned_las_2018)
 
 writeLAS(clipped_las_EA_2018, "D:/datafilesfordissertation/interim_pointclouds/cleaned_las_2018.las")
 cleaned_las_2018 <- readLAS("D:/datafilesfordissertation/interim_pointclouds/cleaned_las_2018.las")
+plot(cleaned_las_2018)
 
 ### Digital Terrain Model DTM  ###
 # DTM clipped 2018
@@ -154,6 +155,8 @@ plot(trees_2018, color = "treeID", bg = "white", axis = TRUE, legend = FALSE)
 dev.off()
 # Save the segmented trees point cloud to a new file
 writeLAS(trees_2018, "D:/datafilesfordissertation/interim_pointclouds/segmented_trees_EA_2018.laz")
+trees_2018 <- readLAS("C:/workspace/McDonagh_trees_from_lidar/outputs/segmented_trees_EA_2018.laz")
+
 
 ##Counting 2018 segmented trees
 # Extract the treeID attribute
@@ -258,8 +261,8 @@ TreeHeight <- maxtree_heights_2018$V1 # Use max tree height from data
 print(TreeHeight)
 
 # Use `crowns_df' data frame that includes `avg_area` and `avg_perimeter`
-CrownArea <- crowns_sf$area # Use average crown area
-CrownPerimeter <- crowns_sf$perimeter  # Use average crown perimeter
+CrownArea <- crowns_df$area # Use average crown area
+CrownPerimeter <- crowns_df$perimeter  # Use average crown perimeter
 
 # Coefficients for mixed broadleaf and conifer forest
 beta_0_mixed <- 2.5
@@ -312,7 +315,7 @@ crowns_df$AGB_mixed <- tree_metrics_df_mixed$AGB_mixed
 ### DECIDUOUS ###
 # Read the shapefile for deciduous area of interest (AOI)
 aoi_deciduous <- st_read("F:/uni_msc/Dissertation/deciduous_aoi.shp")
-if (is.null(aoi)) stop("Failed to read the shapefile.")
+if (is.null(aoi_deciduous)) stop("Failed to read the shapefile.")
 
 # Check CRS of the point cloud and shapefile
 print(st_crs(cleaned_las_2018))
@@ -320,7 +323,7 @@ print(st_crs(aoi_deciduous))
 
 # Ensure the shapefile and point cloud have the same CRS
 if (st_crs(aoi_deciduous) != st_crs(cleaned_las_2018)) {
-  aoi <- st_transform(aoi_deciduous, crs = st_crs(cleaned_las_2018))
+  aoi_deciduous <- st_transform(aoi_deciduous, crs = st_crs(cleaned_las_2018))
 }
 
 ## Clip and Validate point cloud
@@ -346,6 +349,7 @@ png(filename = "C:/workspace/McDonagh_trees_from_lidar/plots/deciduoustrees2018.
 dev.off()
 # Save the segmented trees point cloud to a new file
 writeLAS(deciduous_trees_2018, "C:/workspace/McDonagh_trees_from_lidar/outputs/segmented_trees_deciduous_2018.laz")
+deciduous_trees_2018 <- readLAS("C:/workspace/McDonagh_trees_from_lidar/outputs/segmented_trees_deciduous_2018.laz")
 
 ##Counting deciduous segmented trees
 # Extract the treeID attribute
@@ -451,8 +455,8 @@ alpha_G <- 0
 beta_G <- 0
 
 # Convert deciduous max tree height and crown diameter hull variables to numeric
-deciduous_crowns_df$Z <- as.numeric(deciduous_crowns_df$Z)
-deciduous_crowns_df$crown_diameter_hull_deciduous <- as.numeric(deciduous_crowns_df$crown_diameter_hull_deciduous)
+drone_crowns_df$Z <- as.numeric(deciduous_crowns_df$Z)
+drone_crowns_df$crown_diameter_hull_deciduous <- as.numeric(deciduous_crowns_df$crown_diameter_hull_deciduous)
 
 # Allometric AGB Deciduous Calculation
 deciduous_crowns_df$AGB_deciduous <- (0.016 + alpha_G) * 
@@ -862,7 +866,7 @@ violinCD <- ggplot() +
   labs(x = "Crown Diameter", 
        y = "Tree Type") +
   # Customize the theme
-  theme_minimal() +
+  theme_fancy() +
   # Optionally, you can adjust the color scheme
   scale_fill_manual(values = c("Coniferous" = "blue", "Deciduous" = "green", "Whole Forest" = "purple"))
 
@@ -899,7 +903,7 @@ violinAGB <- ggplot() +
   labs(x = "Aboveground Biomass (AGB)", 
        y = "Tree Type") +
   # Customize the theme
-  theme_minimal() +
+  theme_fancy() +
   # Optionally, you can adjust the color scheme
   scale_fill_manual(values = c("Coniferous" = "blue", "Deciduous" = "green", "Whole Forest" = "purple"))
 

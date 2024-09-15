@@ -116,7 +116,7 @@ classified_subsampled_DronePointCloud <- classify_ground(subsampled_DronePointCl
 writeLAS(classified_subsampled_DronePointCloud, "D:/datafilesfordissertation/interim_pointclouds/classified_subsampled_DronePointCloud.las")
 
 classified_subsampled_DronePointCloud_3<- classify_ground(subsampled_DronePointCloud_3, algorithm = pmf(ws = 5, th = 3))
-writeLAS(classified_subsampled_DronePointCloud_3, "C:/workspace/McDonagh_trees_from_lidar/outputs/classified_subsampled_DronePointCloud_3.las")
+writeLAS(classified_subsampled_DronePointCloud_3, "D:/datafilesfordissertation/interim_pointclouds/classified_subsampled_DronePointCloud_3.las")
 
 # Validate classified subsampled drone point cloud
 summary(classified_subsampled_DronePointCloud)
@@ -130,11 +130,11 @@ las_check(classified_subsampled_DronePointCloud_3)
 ## Normalise the point cloud without DTM (5.2 in lidar lidRbook)
 normDronePointCloud <- normalize_height(classified_subsampled_DronePointCloud, knnidw())
 las_check(normDronePointCloud)
-writeLAS(normDronePointCloud, "C:/workspace/McDonagh_trees_from_lidar/outputs/normDronePointCloud.las")
+writeLAS(normDronePointCloud, "D:/datafilesfordissertation/interim_pointclouds/normDronePointCloud.las")
 
 normDronePointCloud_3 <- normalize_height(classified_subsampled_DronePointCloud_3, knnidw())
 las_check(normDronePointCloud_3)
-writeLAS(normDronePointCloud_3, "C:/workspace/McDonagh_trees_from_lidar/outputs/normDronePointCloud_3.las")
+writeLAS(normDronePointCloud_3, "D:/datafilesfordissertation/interim_pointclouds/normDronePointCloud_3.las")
 
 # check ground points are exactly 0
 ground_points <- filter_ground(normDronePointCloud)
@@ -152,7 +152,7 @@ las_check(normDronePointCloud_3)
 plot(normDronePointCloud_3)
 
 # Optionally, save the clipped point cloud to a new file
-writeLAS(normDronePointCloud_3, "C:/workspace/McDonagh_trees_from_lidar/outputs/normDronePointCloud_3.las")
+writeLAS(normDronePointCloud_3, "D:/datafilesfordissertation/interim_pointclouds/normDronePointCloud_3.las")
 
 # Handle negative outliers
 negative_points_drone_3 <- filter_poi(normDronePointCloud_3, Z < 0)
@@ -164,8 +164,8 @@ plot(cleaned_dronepointcloud_3)
 las_check(cleaned_dronepointcloud_3)
 
 # Optionally, save the clipped point cloud to a new file
-writeLAS(cleaned_dronepointcloud_3, "C:/workspace/McDonagh_trees_from_lidar/outputs/cleaned_dronepointcloud_3.las")
-cleaned_dronepointcloud_3 <-readLAS("C:/workspace/McDonagh_trees_from_lidar/outputs/cleaned_dronepointcloud_3.las")
+writeLAS(cleaned_dronepointcloud_3, "D:/datafilesfordissertation/interim_pointclouds/cleaned_dronepointcloud_3.las")
+cleaned_dronepointcloud_3 <-readLAS("D:/datafilesfordissertation/interim_pointclouds/cleaned_dronepointcloud_3.las")
 
 # Extract the ground points
 ground_points <- filter_ground(cleaned_dronepointcloud)
@@ -188,6 +188,7 @@ plot(trees_drone, color = "treeID", bg = "white", axis = TRUE, legend = FALSE)
 dev.off()
 # Save the segmented trees point cloud to a new file
 writeLAS(trees_drone, "D:/datafilesfordissertation/interim_pointclouds/segmented_trees_drone.las")
+trees_drone <-readLAS("D:/datafilesfordissertation/interim_pointclouds/segmented_trees_drone.las")
 
 plot(trees_drone)
 
@@ -289,7 +290,7 @@ chm_drone <- grid_canopy(cleaned_dronepointcloud_3, res = 0.5, p2r())
 # Plot the CHM
 plot(chm_drone, main = "Canopy Height Model (CHM)")
 
-### Aboveground Biomass (AGB) using mixed temperate woodland calculation ###
+### Aboveground Biomass (AGB) using mixed temperate woodland calculation - generalised calculation ###
 ## Implementing AGB calculations using height, crown area and perimeter
 TreeHeightDrone <- maxtree_heights_drone$V1 # Use max tree height from data
 print(TreeHeightDrone)
@@ -343,6 +344,39 @@ print(tree_metrics_df_mixed_drone)
 write.csv(tree_metrics_df_mixed_drone, "C:/workspace/McDonagh_trees_from_lidar/outputs/drone_tree_metrics_agb_mixed_forest.csv", row.names = FALSE)
 
 drone_crowns_df$AGB_mixed_drone <- tree_metrics_df_mixed_drone$AGB_mixed_drone
+
+### Aboveground Biomass (AGB) using deciduous-specific calculation from Jucker et al. 2017###
+## Allometric calculation and their coefficients from Jucker et al. https://doi.org/10.1111/gcb.13388 ##
+TreeHeightDrone_numeric <- as.numeric(TreeHeightDrone)
+CrownAreaDrone_numeric <- as.numeric(CrownAreaDrone)
+CrownPerimeterDrone_numeric <- as.numeric(CrownPerimeterDrone)
+
+# Coefficients for deciduous AGB calculation (based on Angiosperm coefficients from Jucker et al. 2017)
+alpha_G <- 0
+beta_G <- 0
+
+# Convert deciduous max tree height and crown diameter hull variables to numeric
+drone_crowns_df$Z <- as.numeric(drone_crowns_df$Z)
+drone_crowns_df$crown_diameter_hull_drone <- as.numeric(drone_crowns_df$crown_diameter_hull_drone)
+
+# Allometric AGB Deciduous Calculation
+drone_crowns_df$AGB_drone_mixed <- (0.016 + alpha_G) * 
+  (drone_crowns_df$Z * drone_crowns_df$crown_diameter_hull_drone)^(2.013 + beta_G) * 
+  exp(0.2042 / 2)
+
+print(drone_crowns_df$AGB_drone_mixed)
+
+# Save ABG for deciduous trees to a CSV file
+write.csv(drone_crowns_df, "C:/workspace/McDonagh_trees_from_lidar/outputs/tree_metrics_drone_mixed_jucker.csv", row.names = FALSE)
+
+# Assuming 'AGB_deciduous' is a vector of AGB values for each tree
+total_AGB_drone_mixed <- sum(drone_crowns_df$AGB_drone_mixed)
+
+# Print the total AGB for deciduous trees
+print(total_AGB_drone_mixed)
+
+# Calculate the product of tree height and crown diameter
+drone_crowns_df['tree_height_crown_diameter'] = drone_crowns_df['Z'] * drone_crowns_df['crown_diameter_hull_drone']
 
 
 
@@ -637,7 +671,7 @@ beta_G <- -0.223
 conifer_crowns_df_drone$Z <- as.numeric(conifer_crowns_df_drone$Z)
 conifer_crowns_df_drone$crown_diameter_hull_conifer_drone <- as.numeric(conifer_crowns_df_drone$crown_diameter_hull_conifer_drone)
 
-# Allometric AGB Deciduous Calculation
+# Allometric AGB coniferous Calculation
 conifer_crowns_df_drone$AGB_conifer_drone <- (0.016 + alpha_G) * 
   (conifer_crowns_df_drone$Z * conifer_crowns_df_drone$crown_diameter_hull_conifer_drone)^(2.013 + beta_G) * 
   exp(0.2042 / 2)
@@ -647,13 +681,13 @@ print(conifer_crowns_df_drone$AGB_conifer_drone)
 # Save ABG for deciduous trees to a CSV file
 write.csv(conifer_crowns_df_drone, "C:/workspace/McDonagh_trees_from_lidar/outputs/tree_metrics_conifer_drone.csv", row.names = FALSE)
 
-# Assuming 'AGB_deciduous' is a vector of AGB values for each tree
+# Assuming 'AGB_coniferous' is a vector of AGB values for each tree
 total_AGB_conifer_drone <- sum(conifer_crowns_df_drone$AGB_conifer_drone)
 
 # Print the total AGB for conifer trees
 print(total_AGB_conifer_drone)
 avg_AGB_conifer <- mean(conifer_crowns_df_drone$AGB_conifer_drone, na.rm = TRUE)
-print(paste("Average AGB for deciduous trees:", avg_AGB_conifer))
+print(paste("Average AGB for coniferous trees:", avg_AGB_conifer))
 
 # Calculate the product of tree height and crown diameter
 conifer_crowns_df_drone['tree_height_crown_diameter'] = conifer_crowns_df_drone['Z'] * conifer_crowns_df_drone['crown_diameter_hull_conifer_drone']
@@ -754,7 +788,7 @@ violinAGB_drone <- ggplot() +
   labs(x = "Aboveground Biomass (AGB)", 
        y = "Tree Type") +
   # Customize the theme
-  theme_minimal() +
+  theme_fancy() +
   # Optionally, you can adjust the color scheme
   scale_fill_manual(values = c("Coniferous" = "blue", "Deciduous" = "green", "Whole Forest" = "purple"))
 
@@ -763,4 +797,79 @@ ggsave("C:/workspace/McDonagh_trees_from_lidar/plots/violetplot_agb_drone.png",
 
 # Print the violin AGB plot
 print(violinAGB_drone)
+
+
+
+### Creating plots for analysis (using AGB with Jucker et al. (2017) deciduous equation)
+## Create the scatter plot with whole woodland data
+# Tree height x Crown Diameter vs AGB
+AGB_scatterplot_drone_2 <- ggplot() +
+  # Add coniferous data points
+  geom_point(data = drone_crowns_df, 
+             aes(x = tree_height_crown_diameter, y = AGB_drone_mixed, color = "Whole Forest"), 
+             alpha = 0.7) +
+  # Manually specify the colors for the legend
+  scale_color_manual(values = c("Whole Forest" = "purple")) +
+  # Add labels and title
+  labs(x = "Tree Height x Crown Diameter", 
+       y = "Above Ground Biomass (AGB)",
+       color = "Tree Type") +  # This label will appear as the legend title
+  # Use fancy theme
+  theme_fancy()
+
+# Save the plot as a PNG file to the specified path
+ggsave("plots/dronescatter_plot_tree_height_vs_AGB_2.png", 
+       AGB_scatterplot_drone_2, units = "cm", width = 16, height = 10)
+
+print(AGB_scatterplot_drone_2)
+class(ggplot)
+
+## Create violin plots for tree metrics
+## Tree type vs Crown Diameter
+# Ensure crown diameter columns are numeric
+drone_crowns_df$crown_diameter_hull_drone <- as.numeric(drone_crowns_df$crown_diameter_hull_drone)
+
+# Create violin plot for Woodland Type against Crown Diameter (CD)
+violinCD_drone_2 <- ggplot() +
+  # Add violin plot for the whole forest
+  geom_violin(data = drone_crowns_df, 
+              aes(x = crown_diameter_hull_drone, y = factor("Whole Forest"), fill = "Whole Forest"), 
+              trim = FALSE, alpha = 0.7) +
+  # Add labels and title
+  labs(x = "Crown Diameter", 
+       y = "Tree Type") +
+  # Customize the theme
+  theme_fancy() +
+  # Optionally, you can adjust the color scheme
+  scale_fill_manual(values = c("Whole Forest" = "purple"))
+
+ggsave("C:/workspace/McDonagh_trees_from_lidar/plots/violetplot_agb_CD_drone_2.png", 
+       violinCD_drone_2, width = 7, height = 5)
+
+# Print the violin CD plot
+print(violinCD_drone_2)
+
+
+# Create violin plot for Woodland type against AGB
+violinAGB_drone_2 <- ggplot() +
+  # Add violin plot for the whole forest
+  geom_violin(data = drone_crowns_df, 
+              aes(x = AGB_drone_mixed, y = factor("Whole Forest"), fill = "Whole Forest"), 
+              trim = FALSE, alpha = 0.7) +
+  # Cap x-axis to 5000
+  xlim(0, 5000) +
+  # Add labels and title
+  labs(x = "Aboveground Biomass (AGB)", 
+       y = "Tree Type") +
+  # Customize the theme
+  theme_fancy() +
+  # Optionally, you can adjust the color scheme
+  scale_fill_manual(values = c("Whole Forest" = "purple"))
+
+ggsave("C:/workspace/McDonagh_trees_from_lidar/plots/violetplot_agb_drone_2.png", 
+       violinAGB_drone_2, width = 7, height = 5)
+
+# Print the violin AGB plot
+print(violinAGB_drone_2)
+
 
